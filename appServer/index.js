@@ -38,6 +38,7 @@ subApp.use(bodyParser.json({ limit: '50mb' }))
 app.use('/', subApp)
 frameworkAPI.bootstrap(frameworkConfig, subApp).then(data => startApp())
     .catch(error => {
+        console.log(error)
         startApp()
     })
 
