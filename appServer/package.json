@@ -25,6 +25,7 @@
     "moment": "^2.22.2",
     "node-cron": "^1.2.1",
     "node-zip": "^1.1.1",
+    "openrap-sunbirded-plugin": "0.0.1",
     "q": "^1.5.1",
     "random-mac": "0.0.4",
     "request": "^2.87.0",
