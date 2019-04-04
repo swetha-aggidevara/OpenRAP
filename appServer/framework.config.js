@@ -9,7 +9,7 @@ module.exports = {
             disabledApis: ["cat", "cluster", "ingest", "nodes", "remote", "snapshot", "tasks"]
         },
         couchdb: {
-            url: 'http://127.0.0.1:5984'
+            url: process.env.COUCHDB_URL || 'http://admin:password@127.0.0.1:5984'
         }
     },
     telemetry: {
@@ -20,15 +20,15 @@ module.exports = {
             'pid': 'sunbird-openRAP'
         },
         env: 'offline',
-        channel: process.env.channel,
+        channel: process.env.CHANNEL,
         endpoint: 'v1/telemetry',
         batchsize: 1,
-        host: process.env.telemetry_host,
+        host: process.env.API_URL + process.env.TELEMETRY_SYNC_URL,
         runningEnv: 'server'
     },
     plugins: [
         { id: "openrap-sunbirded-plugin", version: "1.0" }
     ],
     pluginBasePath: __dirname + '/node_modules/',
-    logLevel: 'error'
+    logLevel: 'debug',
 }
