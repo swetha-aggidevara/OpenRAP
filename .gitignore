@@ -4,3 +4,4 @@ node_modules/
 apiserver/vendor
 devmgmtV2/.eslintrc.json
 devmgmtui/.eslintrc.json
+appServer/portal

@@ -4,12 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "./node_modules/.bin/pm2 start index.js",
+    "stop": "./node_modules/.bin/pm2 stop all"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@project-sunbird/ext-framework-server": "^0.1.15",
+    "@project-sunbird/ext-framework-server": "^0.1.16",
     "bcrypt": "^2.0.1",
     "body-parser": "^1.18.2",
     "connect-multiparty": "^2.1.0",
