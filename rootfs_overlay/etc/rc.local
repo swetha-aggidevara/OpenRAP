@@ -1,3 +1,0 @@
-#!/bin/sh -e
-service udev restart &
-exit 0

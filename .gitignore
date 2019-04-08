@@ -5,3 +5,7 @@ apiserver/vendor
 devmgmtV2/.eslintrc.json
 devmgmtui/.eslintrc.json
 appServer/portal
+appServer/data
+appServer/downloads
+appServer/content_files
+appServer/log
