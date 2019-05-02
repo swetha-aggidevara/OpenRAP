@@ -1,7 +1,6 @@
 {
   "name": "OpenRAP",
   "version": "1.0.0",
-  "productName": "DIKSHA",
   "description": "OpenRAP Software",
   "main": "main.js",
   "scripts": {
@@ -38,7 +37,6 @@
     "getmac": "^1.4.3",
     "glob": "^7.1.2",
     "is-online": "^8.1.0",
-    "jquery": "^3.4.0",
     "jsonwebtoken": "^8.2.1",
     "moment": "^2.22.2",
     "node-cron": "^1.2.1",
