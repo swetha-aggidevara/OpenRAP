@@ -1,3 +1,6 @@
+/**
+ * @author Harish Kumar Gangula <harishg@ilimi.in>
+ */
 import nano from 'nano';
 
 const connection = nano(process.env.COUCHDB_URL);

@@ -5,14 +5,21 @@ import { frameworkAPI } from '@project-sunbird/ext-framework-server/api';
 import { frameworkConfig } from './framework.config';
 import { logger } from '@project-sunbird/ext-framework-server/logger';
 
-
 const app = express();
 app.use(bodyParser.json());
-
 const subApp = express()
 subApp.use(bodyParser.json({ limit: '50mb' }))
-
 app.use('/', subApp);
+
+
+// Initialize container
+
+// create databases
+
+
+
+
+// Initialize ext framework
 frameworkAPI
     .bootstrap(frameworkConfig, subApp).then(() => startApp())
     .catch((error: any) => {
@@ -20,6 +27,8 @@ frameworkAPI
         startApp()
     })
 
+
+// start the app
 
 export default function startApp() {
     app.listen(process.env.port, (error: any) => {
