@@ -44,12 +44,3 @@ export class DataBaseSDK {
         return this.connection.db.list();
     }
 }
-
-
-
-
-
-
-
-
-
