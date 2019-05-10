@@ -4,8 +4,9 @@ node_modules/
 apiserver/vendor
 devmgmtV2/.eslintrc.json
 devmgmtui/.eslintrc.json
-appServer/portal
-appServer/data
-appServer/downloads
-appServer/content_files
-appServer/log
+src/portal
+src/data
+src/downloads
+src/content_files
+src/log
+src/dist
