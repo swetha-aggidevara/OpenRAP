@@ -1,16 +1,22 @@
-const { app, BrowserWindow } = require('electron');
-
-const fs = require('fs');
-const path = require('path');
+import { bootstrap, framework } from './index';
+import  { app, BrowserWindow } from 'electron';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win: any;
+  let envs = JSON.parse(fs.readFileSync(path.join(__dirname, 'env.json'), { encoding: 'utf-8' }))
+  for (let [key, value] of Object.keys(envs)) {
+    process.env[key] = value;
+  }
 
 function createWindow() {
+  //bootstrap container
+  bootstrap();
 
-  // Instantiate Express App
-  require(path.join(__dirname, 'index.js'))(function () {
+  //bootstrap framework
+  framework(()=> {
     win.loadURL('http://localhost:9000');
   });
 
