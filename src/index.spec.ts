@@ -11,15 +11,18 @@ describe('Index file', () => {
 
   it('should create databases', (done) => {
     process.env.COUCHDB_URL = 'http://admin:password@localhost:5984';
-      Promise
-          .all([bootstrap()])
-          .then(() => {
-              let dataBase = new DataBaseSDK();
-              return dataBase.list();
-          }).then((data) => {
-            expect(data.length).to.equal(4);
-            done();
-          })
+    let schema = JSON.parse(fs.readFileSync(path.join(__dirname, 'db', 'schemas.json'), { encoding: 'utf8' }))
+    let databases = schema.databases;
+    bootstrap()
+      .then(() => {
+        let dataBase = new DataBaseSDK();
+        return dataBase.listDBs();
+      }).then((dbs) => {
+        for (let db of databases) {
+          expect((dbs.indexOf(db.name) !== -1)).to.be.true;
+        }
+        done()
+      })
   });
 
 });

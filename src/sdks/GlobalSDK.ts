@@ -1,3 +1,5 @@
+import { DataBaseSDK } from "./DataBaseSDK";
+
 /**
  * @author Harish Kumar Gangula <harishg@ilimi.in>
  */
@@ -13,7 +15,7 @@ interface pluginConfig {
     apiTokenRefreshFn: any
 }
 export function register(pluginId: string, pluginConfig: object) {
-
+    let dbSDK = new DataBaseSDK()
 };
 
 /*

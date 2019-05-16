@@ -10,3 +10,5 @@ src/downloads
 src/content_files
 src/log
 src/dist
+src/coverage
+src/.nyc_output

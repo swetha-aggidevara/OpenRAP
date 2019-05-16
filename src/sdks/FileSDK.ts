@@ -4,7 +4,7 @@
 import * as fse from 'fs-extra';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as DecompressZip from 'decompress-zip';
+import DecompressZip from 'decompress-zip';
 import * as _ from 'lodash';
 import * as chokidar from 'chokidar';
 const archiver = require("archiver")
