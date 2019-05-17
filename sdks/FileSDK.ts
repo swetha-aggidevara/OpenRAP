@@ -103,10 +103,6 @@ export default class FileSDK {
             }
             archive.finalize()
         })
-
-
-
-
     };
 
     /**
