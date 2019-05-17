@@ -4,7 +4,7 @@
   "description": "OpenRAP Software",
   "main": "dist/main.js",
   "scripts": {
-    "build": "rm -rf dist && tsc && cp env.json ./dist && cp package.json ./dist",
+    "build": "rm -rf dist && tsc && cp env.json ./dist && cp package.json ./dist && cp -r db ./dist/db",
     "test": "nyc --reporter=html --reporter=text mocha --exit -r ts-node/register **/**/*.spec.ts **/*.spec.ts *.spec.ts"
   },
   "nyc": {
