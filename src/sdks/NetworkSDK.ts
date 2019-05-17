@@ -4,10 +4,11 @@ import * as url from 'url';
 
 
 
-export const isInternetAvailable = async () => {
+export const isInternetAvailable = async (baseUrl?: string) => {
     return new Promise((resolve, reject) => {
-        let protocol = url.parse(process.env.APP_BASE_URL).protocol;
-        let endPoint = process.env.APP_BASE_URL.slice((protocol + '//').length)
+        let endPointUrl: string = baseUrl ? baseUrl : (process.env.APP_BASE_URL as string);
+        let protocol = url.parse(endPointUrl).protocol;
+        let endPoint = endPointUrl.slice((protocol + '//').length)
         dns.resolve(endPoint, function (err) {
             if (err) {
                 reject(false);

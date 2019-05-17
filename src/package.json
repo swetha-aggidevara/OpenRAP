@@ -34,7 +34,8 @@
       "**/*.js",
       "**/*.spec.ts",
       "**/**/*.spec.ts",
-      "*.spec.ts"
+      "*.spec.ts",
+      "interfaces/*.ts"
     ],
     "include": [
       "**/**/*.ts",

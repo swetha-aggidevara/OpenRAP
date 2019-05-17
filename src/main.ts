@@ -1,5 +1,5 @@
 import { bootstrap, framework } from './index';
-import  { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
@@ -7,18 +7,24 @@ import * as _ from 'lodash';
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win: any;
+
 let envs = JSON.parse(fs.readFileSync(path.join(__dirname, 'env.json'), { encoding: 'utf-8' }));
 _.forEach(envs, function (value, key) {
   process.env[key] = value;
 });
 
 function createWindow() {
+
+  // create admin for the database
+
+
+
   //bootstrap container
   bootstrap();
 
   //bootstrap framework
-  framework(()=> {
-    win.loadURL('http://localhost:9000');
+  framework(() => {
+    win.loadURL(`http://localhost:${process.env.APPLICATION_PORT}`);
   });
 
   // Create the browser window.

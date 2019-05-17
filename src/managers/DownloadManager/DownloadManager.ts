@@ -140,7 +140,6 @@ export default class DownloadManager {
                             doc.id = doc._id;
                             delete doc._id;
                             doc.status = STATUS.Completed;
-                            console.log('emitting', docId)
                             EventManager.emit(`${this.pluginId}:download:complete`, doc);
                             return this.dbSDK.updateDoc(this.dataBaseName, docId, { status: STATUS.EventEmitted, updatedOn: Date.now() })
                         } else {
@@ -255,7 +254,6 @@ export default class DownloadManager {
         // Read status of the request with downloadId and return downloadObject
         let downloadObject: DownloadObject;
         downloadObject = await this.dbSDK.getDoc(this.dataBaseName, downloadId);
-        console.log('downloadObject', downloadId)
         _.omit(downloadObject, ['pluginId', 'statusMsg', '_rev'])
         downloadObject.id = downloadObject['_id'];
         delete downloadObject['_id'];
@@ -335,10 +333,13 @@ export default class DownloadManager {
         if (status) {
             selector.selector.status["$in"] = [status as STATUS];
         }
-        let { docs } = await this.dbSDK.find(this.dataBaseName, selector)
+        let { docs } = await this.dbSDK.findDocs(this.dataBaseName, selector)
         downloadObjects = _.map(docs, doc => {
             doc.id = doc['_id'];
-            delete doc['_id'], doc['pluginId'], doc['statusMsg'], doc['_rev'];
+            delete doc['_id'];
+            delete doc['pluginId'];
+            delete doc['statusMsg'];
+            delete doc['_rev'];
             return doc;
         })
         return Promise.resolve(downloadObjects);

@@ -3,7 +3,6 @@
  */
 import { Singleton } from 'typescript-ioc'
 import nano from 'nano';
-import { async } from 'rxjs/internal/scheduler/async';
 @Singleton
 export class DataBaseSDK {
     connection: any;
@@ -67,7 +66,7 @@ export class DataBaseSDK {
         return this.connection.db.use(database).bulk({ docs: documents });
     }
 
-    find(database: string, searchObj: Object) {
+    findDocs(database: string, searchObj: Object) {
         return this.connection.db.use(database).find(searchObj);
     }
 }

@@ -8,14 +8,18 @@ import { DataBaseSDK } from "./DataBaseSDK";
  * Plugin to register with the container on initialization.
  */
 
+
 interface pluginConfig {
     pluginVer: string,
     apiToken: string,
     apiBaseURL: string,
-    apiTokenRefreshFn: any
+    apiTokenRefreshFn: string
 }
-export function register(pluginId: string, pluginConfig: object) {
+let databaseName = 'plugin_registry';
+export const register = async (pluginId: string, pluginConfig: object): Promise<any> => {
     let dbSDK = new DataBaseSDK()
+    await dbSDK.upsertDoc(databaseName, pluginId, pluginConfig);
+    return true;
 };
 
 /*
@@ -23,8 +27,10 @@ export function register(pluginId: string, pluginConfig: object) {
  * @param pluginId String
  * @return pluginConfig
  */
-export function get(pluginId: string): pluginConfig {
-
-
-    return {} as pluginConfig;
+export const get = async (pluginId: string): Promise<pluginConfig> => {
+    let dbSDK = new DataBaseSDK()
+    let pluginConfig = await dbSDK.getDoc(databaseName, pluginId);
+    delete pluginConfig['_id'];
+    delete pluginConfig['_rev'];
+    return Promise.resolve(pluginConfig)
 }

@@ -21,22 +21,7 @@ export class DownloadManagerHelper {
             maxConcurrentDownloads: 1, //  don't change this which will give db duplicate update errors on progress
             downloadOptions: options
         }
-
         this.suDScheduler = new SuDScheduler(schedulerOptions)
-        DownloadManagerHelper.startDownloadQueueWatcher()
-    }
-
-
-    /*
-     * Method to watch for the download queue whether it is running or not
-     */
-    static startDownloadQueueWatcher = () => {
-
-        // create a time interval which will check the health of the download manager this should not fail
-        setInterval(() => {
-            // implement logic to check the downloader is running or not if not invoke reconciliation
-        }, 10000)
-
     }
 
     queueDownload = (downloadId: string, pluginId: string, locations: object, observer: any): boolean => {

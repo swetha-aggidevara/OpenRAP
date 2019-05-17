@@ -50,11 +50,11 @@ export const framework = async (cb) => {
 
 // start the app
 export default function startApp(cb) {
-    app.listen(process.env.port, (error: any) => {
+    app.listen(process.env.APPLICATION_PORT, (error: any) => {
         if (error)
             logger.error(error);
         else {
-            logger.info("listening on " + process.env.port);
+            logger.info("listening on " + process.env.APPLICATION_PORT);
             cb()
         }
     })
