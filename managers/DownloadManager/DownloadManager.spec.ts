@@ -18,10 +18,12 @@ describe('DownloadManager', () => {
         this.timeout(10000);
         downloadManager.download([{
             id: 'do_312589002481041408120510',
-            url: 'https://ntpproductionall.blob.core.windows.net/ntp-content-production/ecar_files/do_312589002481041408120510/aarthik-vikaas-kii-smjh_1554523454637_do_312589002481041408120510_2.0_spine.ecar'
+            url: 'https://ntpproductionall.blob.core.windows.net/ntp-content-production/ecar_files/do_312589002481041408120510/aarthik-vikaas-kii-smjh_1554523454637_do_312589002481041408120510_2.0_spine.ecar',
+            size: 11786
         }, {
             id: 'do_312588883252060160117745',
-            url: 'https://ntpproductionall.blob.core.windows.net/ntp-content-production/ecar_files/do_312588883252060160117745/raindrops_1554477690491_do_312588883252060160117745_2.0_spine.ecar'
+            url: 'https://ntpproductionall.blob.core.windows.net/ntp-content-production/ecar_files/do_312588883252060160117745/raindrops_1554477690491_do_312588883252060160117745_2.0_spine.ecar',
+            size: 267849
         }], 'ecars').then(downloadId => {
             expect(downloadId).to.be.string;
         })
@@ -37,7 +39,8 @@ describe('DownloadManager', () => {
         this.timeout(10000);
         downloadManager.download({
             id: '10MB_FILE',
-            url: 'https://sample-videos.com/zip/10mb.zip'
+            url: 'https://sample-videos.com/zip/10mb.zip',
+            size: 10503575
         }, 'ecars').then(downloadId => {
             expect(downloadId).to.be.string;
 

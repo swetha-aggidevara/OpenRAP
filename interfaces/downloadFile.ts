@@ -1,5 +1,6 @@
 
 export interface DownloadFile {
     id: string,
-    url: string
+    url: string,
+    size: number
 }

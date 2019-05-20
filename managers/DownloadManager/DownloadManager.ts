@@ -4,19 +4,19 @@
 
 import { DownloadObject, DownloadFile } from '../../interfaces';
 import { Inject } from 'typescript-ioc'
-import { EventManager } from '@project-sunbird/ext-framework-server/managers/EventManager';
+
 import * as _ from 'lodash';
 import uuid4 from 'uuid/v4';
 import * as path from 'path';
 import { DataBaseSDK } from '../../sdks/DataBaseSDK';
 import FileSDK from '../../sdks/FileSDK';
-import { logger } from '@project-sunbird/ext-framework-server/logger';
+
 import { DownloadManagerHelper } from './DownloadManagerHelper';
 
 /*
 * Below are the status for the download manager with different status
 */
-enum STATUS {
+export enum STATUS {
     Submitted = "SUBMITTED",
     InProgress = "INPROGRESS",
     Completed = "COMPLETED",
@@ -24,6 +24,14 @@ enum STATUS {
     Cancelled = "CANCELLED",
     EventEmitted = "EVENTEMITTED"
 }
+
+export enum STATUS_MESSAGE {
+    Submitted = "Request is submitted. It will process soon.",
+    InProgress = "Downloading is in progress.",
+    Completed = "Downloaded  successfully.",
+    Failed = "Download failed."
+}
+
 
 
 
@@ -41,7 +49,7 @@ export default class DownloadManager {
 
     private dataBaseName = 'download_queue';
 
-    constructor(pluginId) {
+    constructor(pluginId: string) {
         this.pluginId = pluginId;
         this.fileSDK = new FileSDK(pluginId);
     }
@@ -57,172 +65,36 @@ export default class DownloadManager {
         2. when the it fails to add to the queue
         **/
 
-        let downloadObserver = (downloadId: string, docId: string) => {
-            return ({
-                next: progressInfo => {
-                    //update the status to In Progress in DB with stats
-                    this.dbSDK.getDoc(this.dataBaseName, docId).then(doc => {
-                        // for initial call we will get the filesize
-                        if (_.get(progressInfo, 'filesize')) {
-                            doc.files = _.map(doc.files, file => {
-                                if (file.id === downloadId) {
-                                    file.size = _.get(progressInfo, 'filesize')
-                                }
-                                return file;
-                            })
-                            doc.stats.totalSize += _.get(progressInfo, 'filesize')
-                        }
-                        //sub-sequent calls we will get downloaded count
-                        if (_.get(progressInfo, 'total.downloaded')) {
-                            let downloaded = progressInfo.total.downloaded;
-                            doc.files = _.map(doc.files, file => {
-                                if (file.id === downloadId) {
-                                    file.downloaded = downloaded
-                                    file.size = progressInfo.total.filesize;
-                                }
-                                return file;
-                            })
-                        }
 
-                        doc.status = STATUS.InProgress;
-                        doc.updatedOn = Date.now()
-                        delete doc['_rev'];
-                        return this.dbSDK.updateDoc(this.dataBaseName, docId, doc);
-                    }).catch(err => {
-                        logger.error('While updating progress in database', err);
-                    })
-
-                },
-                error: e => {
-                    // generate the telemetry
-                    // update the status to failed
-                    this.dbSDK.updateDoc(this.dataBaseName, docId, {
-                        status: STATUS.Failed, updatedOn: Date.now()
-                    })
-                        .then(() => {
-                            return this.dbSDK.getDoc(this.dataBaseName, docId)
-                        })
-                        .then(doc => {
-                            logger.error('Error', e, 'context:', JSON.stringify(doc));
-                        }).catch(e => {
-                            logger.error('Error', e, 'context-error:', e, 'docId', docId, 'fileId', downloadId);
-                        })
-
-                    // Emit the event on error
-                },
-                complete: () => {
-                    // log the info 
-                    // generate the telemetry
-                    // update the status to completed
-
-                    this.dbSDK.getDoc(this.dataBaseName, docId).then(async (doc) => {
-                        doc.stats.downloadedFiles = doc.stats.downloadedFiles + 1;
-                        if (_.find(doc.files, { 'id': downloadId })['size']) {
-                            doc.stats.downloadedSize += _.find(doc.files, { 'id': downloadId })['size'];
-                        }
-                        if (doc.stats.downloadedFiles === doc.files.length) {
-                            doc.files = _.map(doc.files, file => {
-                                if (file.id === downloadId) {
-                                    file.downloaded = file.size;
-                                }
-                                return file;
-                            })
-                            let now = Date.now()
-                            doc.updatedOn = now;
-                            await this.dbSDK.updateDoc(this.dataBaseName, docId, {
-                                status: STATUS.Completed,
-                                files: doc.files,
-                                stats: doc.stats,
-                                updatedOn: now
-                            })
-                            _.omit(doc, ['pluginId', 'statusMsg', '_rev']);
-
-                            doc.id = doc._id;
-                            delete doc._id;
-                            doc.status = STATUS.Completed;
-                            EventManager.emit(`${this.pluginId}:download:complete`, doc);
-                            return this.dbSDK.updateDoc(this.dataBaseName, docId, { status: STATUS.EventEmitted, updatedOn: Date.now() })
-                        } else {
-                            doc.files = _.map(doc.files, file => {
-                                if (file.id === downloadId) {
-                                    file.downloaded = file.size;
-                                }
-                                return file;
-                            })
-                            return this.dbSDK.updateDoc(this.dataBaseName, docId, {
-                                files: doc.files,
-                                stats: doc.stats,
-                                updatedOn: Date.now()
-                            })
-                        }
-                    }).catch(e => {
-                        logger.error('while download complete processing', e, 'docId', docId, 'fileId', downloadId);
-                    })
-                }
-            });
-        }
         //ensure dest location exists
         await this.fileSDK.mkdir(location)
+        let docId = uuid4();
         // insert the download request with data to database
-        if (!_.isArray(files)) {
-            let docId = uuid4();
-            let downloadId = (files as DownloadFile).id;
-            let downloadUrl = (files as DownloadFile).url;
-            let fileName = downloadUrl.substring(downloadUrl.lastIndexOf('/') + 1);
+        if (_.isArray(files)) {
+            let fileSizes = _.map(files, file => file.size);
+            let totalSize = _.reduce(fileSizes, (sum, n) => {
+                return sum + n;
+            }, 0);
             let doc = {
                 pluginId: this.pluginId,
                 status: STATUS.Submitted,
-                statusMsg: "Request is submitted. It will process soon",
-                createdOn: Date.now(),
-                updatedOn: Date.now(),
-                stats: {
-                    totalFiles: 1,
-                    downloadedFiles: 0,
-                    totalSize: 0,
-                    downloadedSize: 0,
-                },
-                files: [{
-                    id: downloadId,
-                    file: fileName,
-                    source: downloadUrl,
-                    path: this.fileSDK.getAbsPath(location),
-                    size: 0,
-                    downloaded: 0 // Downloaded until now
-                }]
-            }
-
-            await this.dbSDK.insertDoc(this.dataBaseName, doc, docId);
-
-            // push the request to download queue
-            let locations = {
-                url: downloadUrl,
-                savePath: this.fileSDK.getAbsPath(path.join(location, fileName))
-            }
-            // while adding to queue we will prefix with docId if same content is requested again we will download it again
-            this.downloadManagerHelper.queueDownload(`${docId}_${downloadId}`, this.pluginId, locations, downloadObserver(downloadId, docId));
-            return Promise.resolve(docId)
-        } else {
-            let docId = uuid4();
-            let doc = {
-                pluginId: this.pluginId,
-                status: STATUS.Submitted,
-                statusMsg: "Request is submitted. It will process soon",
+                statusMsg: STATUS_MESSAGE.Submitted,
                 createdOn: Date.now(),
                 updatedOn: Date.now(),
                 stats: {
                     totalFiles: (files as DownloadFile[]).length,
                     downloadedFiles: 0,
-                    totalSize: 0,
+                    totalSize: totalSize,
                     downloadedSize: 0,
                 },
                 files: []
             }
             for (const file of (files as DownloadFile[])) {
-                let downloadId = (file as DownloadFile).id;
+                let fileId = (file as DownloadFile).id;
                 let downloadUrl = (file as DownloadFile).url;
                 let fileName = downloadUrl.substring(downloadUrl.lastIndexOf('/') + 1);
                 let downloadObj = {
-                    id: downloadId,
+                    id: fileId,
                     file: fileName,
                     source: downloadUrl,
                     path: this.fileSDK.getAbsPath(location),
@@ -237,9 +109,46 @@ export default class DownloadManager {
                     savePath: this.fileSDK.getAbsPath(path.join(location, fileName))
                 }
                 // while adding to queue we will prefix with docId if same content is requested again we will download it again
-                this.downloadManagerHelper.queueDownload(`${docId}_${downloadId}`, this.pluginId, locations, downloadObserver(downloadId, docId));
+                this.downloadManagerHelper.queueDownload(`${docId}_${fileId}`, this.pluginId, locations, this.downloadManagerHelper.downloadObserver(fileId, docId));
             }
             await this.dbSDK.insertDoc(this.dataBaseName, doc, docId);
+            return Promise.resolve(docId)
+        } else {
+            let fileId = (files as DownloadFile).id;
+            let downloadUrl = (files as DownloadFile).url;
+            let totalSize = files.size
+            let fileName = downloadUrl.substring(downloadUrl.lastIndexOf('/') + 1);
+            let doc = {
+                pluginId: this.pluginId,
+                status: STATUS.Submitted,
+                statusMsg: "Request is submitted. It will process soon",
+                createdOn: Date.now(),
+                updatedOn: Date.now(),
+                stats: {
+                    totalFiles: 1,
+                    downloadedFiles: 0,
+                    totalSize: totalSize,
+                    downloadedSize: 0
+                },
+                files: [{
+                    id: fileId,
+                    file: fileName,
+                    source: downloadUrl,
+                    path: this.fileSDK.getAbsPath(location),
+                    size: totalSize,
+                    downloaded: 0 // Downloaded until now
+                }]
+            }
+
+            await this.dbSDK.insertDoc(this.dataBaseName, doc, docId);
+
+            // push the request to download queue
+            let locations = {
+                url: downloadUrl,
+                savePath: this.fileSDK.getAbsPath(path.join(location, fileName))
+            }
+            // while adding to queue we will prefix with docId if same content is requested again we will download it again
+            this.downloadManagerHelper.queueDownload(`${docId}_${fileId}`, this.pluginId, locations, this.downloadManagerHelper.downloadObserver(fileId, docId));
             return Promise.resolve(docId)
         }
 
@@ -323,15 +232,16 @@ export default class DownloadManager {
         // get the list of items from database if status is provided otherwise get all the status
         let downloadObjects: DownloadObject[] = [];
         let selector = {
-            selector: {
-                status: {
-                    "$in": [STATUS.Submitted, STATUS.InProgress,
-                    STATUS.Failed, STATUS.EventEmitted, STATUS.Completed, STATUS.Cancelled]
-                }
-            }
+            selector: {}
         }
         if (status) {
-            selector.selector.status["$in"] = [status as STATUS];
+            selector = {
+                selector: {
+                    status: {
+                        "$in": [status as STATUS]
+                    }
+                }
+            }
         }
         let { docs } = await this.dbSDK.findDocs(this.dataBaseName, selector)
         downloadObjects = _.map(docs, doc => {
@@ -343,6 +253,18 @@ export default class DownloadManager {
             return doc;
         })
         return Promise.resolve(downloadObjects);
+    }
+
+    async resume(downloadIds: string[]) {
+        // get the data from db with download ids
+
+        // if doc.length > 0
+        // get the files from each id if the downloaded is less than  sized add to queue 
+        // update the updatedOn for each downloadId
+
+
+        // else Promise.resolve(false)
+
     }
 
 
@@ -367,4 +289,5 @@ export const reconciliation = async () => {
     // Emit the events for downloaded files which are not emitted the events
 
     // Add the downloads to queue if the files are having status Submitted, In-Progress
+    // By invoking the resume method in downloadManager with downloadIds
 }
