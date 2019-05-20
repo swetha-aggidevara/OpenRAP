@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import DownloadManager from './DownloadManager'
+import DownloadManager, { reconciliation } from './DownloadManager'
+import { containerAPI } from './../../api/index'
 import { threadId } from 'worker_threads';
 import FileSDK from '../../sdks/FileSDK';
 import { EventManager } from '@project-sunbird/ext-framework-server/managers/EventManager';
@@ -10,8 +11,9 @@ let downloadManager = new DownloadManager('testplugindownload')
 let fileSDK = new FileSDK('testplugindownload');
 
 describe('DownloadManager', () => {
-    before(() => {
+    before(async () => {
         process.env.COUCHDB_URL = 'http://admin:password@localhost:5984';
+        await containerAPI.bootstrap()
     })
 
     it('should download multiple files successfully', function (done) {
@@ -45,12 +47,16 @@ describe('DownloadManager', () => {
             expect(downloadId).to.be.string;
 
         })
+        let flag = false;
         EventManager.subscribe(`testplugindownload:download:complete`, (data) => {
             expect(data.status).to.be.equal('COMPLETED')
             if (!_.isEmpty(_.find(data.files, { 'id': '10MB_FILE' }))) {
-                done()
+                flag = true;
             }
         })
+        setTimeout(() => {
+            if (flag) done();
+        }, 9000)
     })
 
 
@@ -80,6 +86,41 @@ describe('DownloadManager', () => {
             done()
         })
     })
+
+    it('should reconciliation after service restart', function (done) {
+        // make a item to completed and add two item to queue each with inprogress and submitted status
+        this.timeout(10000);
+        downloadManager.download([{
+            id: 'do_3125888832520601601177451',
+            url: 'https://ntpproductionall.blob.core.windows.net/ntp-content-production/ecar_files/do_312588883252060160117745/raindrops_1554477690491_do_312588883252060160117745_2.0_spine.ecar',
+            size: 267849
+        }, {
+            id: 'do_3125890024810414081205101',
+            url: 'https://ntpproductionall.blob.core.windows.net/ntp-content-production/ecar_files/do_312589002481041408120510/aarthik-vikaas-kii-smjh_1554523454637_do_312589002481041408120510_2.0_spine.ecar',
+            size: 11786
+        }], 'ecars').then(downloadId => {
+            expect(downloadId).to.be.string;
+        }).then(() => {
+            for (let t of downloadManager.downloadQueue()) {
+                downloadManager.cancel(t.key);
+            }
+            setTimeout(() => {
+                return reconciliation()
+            }, 500)
+        }).catch(err => {
+            console.error('Error while running reconciliation test case', err);
+            done()
+        })
+
+        let interval = setInterval(() => {
+            let t = downloadManager.downloadQueue();
+            if (_.isEmpty(t)) {
+                clearInterval(interval)
+                done()
+            }
+        }, 1000)
+    })
+
 
 
 

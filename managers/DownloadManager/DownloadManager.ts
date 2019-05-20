@@ -12,6 +12,8 @@ import { DataBaseSDK } from '../../sdks/DataBaseSDK';
 import FileSDK from '../../sdks/FileSDK';
 
 import { DownloadManagerHelper } from './DownloadManagerHelper';
+import { logger } from '@project-sunbird/ext-framework-server/logger';
+import { EventManager } from '@project-sunbird/ext-framework-server/managers/EventManager';
 
 /*
 * Below are the status for the download manager with different status
@@ -98,7 +100,7 @@ export default class DownloadManager {
                     file: fileName,
                     source: downloadUrl,
                     path: this.fileSDK.getAbsPath(location),
-                    size: 0,
+                    size: file.size,
                     downloaded: 0 // Downloaded until now
                 }
                 doc.files.push(downloadObj);
@@ -186,6 +188,7 @@ export default class DownloadManager {
         //TODO: need to implement
         //await this.dbSDK.updateDoc(this.dataBaseName, downloadId, { status: STATUS.Cancelled });
         //return Promise.resolve(this.downloadManagerHelper.cancel(downloadId));
+        this.downloadManagerHelper.cancel(downloadId)
         return Promise.resolve(true);
     };
 
@@ -194,8 +197,8 @@ export default class DownloadManager {
      * @param downloadId String
      */
     pauseAll = (): void => {
-        //TODO: need to implement
-        //this.downloadManagerHelper.pauseAll();
+        //TODO: need to implement completed this is for test cases
+        // this.downloadManagerHelper.pauseAll();
     };
 
     /*
@@ -222,6 +225,11 @@ export default class DownloadManager {
         // }
         return Promise.resolve(true);
     };
+
+    // this is for test cases only
+    downloadQueue() {
+        return this.downloadManagerHelper.taskQueue();
+    }
 
     /*
      * Method to list the download queue based on the status
@@ -255,16 +263,30 @@ export default class DownloadManager {
         return Promise.resolve(downloadObjects);
     }
 
-    async resume(downloadIds: string[]) {
-        // get the data from db with download ids
+    async resume(downloadId: string) {
+        // get the data from db with download id
+        let doc = await this.dbSDK.getDoc(this.dataBaseName, downloadId).catch(err => {
+            logger.error(`while getting the doc to resume doc_id ${downloadId}, err: ${err}`)
+        });
 
-        // if doc.length > 0
-        // get the files from each id if the downloaded is less than  sized add to queue 
-        // update the updatedOn for each downloadId
-
-
-        // else Promise.resolve(false)
-
+        if (!_.isEmpty(doc)) {
+            for (let file of doc.files) {
+                if (file.size > file.downloaded) {
+                    // push the request to download queue
+                    let locations = {
+                        url: file.source,
+                        savePath: path.join(file.path, file.file)
+                    }
+                    // while adding to queue we will prefix with docId if same content is requested again we will download it again
+                    try {
+                        this.downloadManagerHelper.queueDownload(`${doc._id}_${file.id}`, doc.pluginId, locations, this.downloadManagerHelper.downloadObserver(file.id, doc._id));
+                        await this.dbSDK.updateDoc(this.dataBaseName, doc._id, { updatedOn: Date.now() });
+                    } catch (error) {
+                        logger.error(`while adding to queue doc ${JSON.stringify(doc)}, error : ${error}`)
+                    }
+                }
+            }
+        }
     }
 
 
@@ -276,18 +298,43 @@ export default class DownloadManager {
 export const reconciliation = async () => {
 
     // Get the data from database where status is completed
+    let dbSDK = new DataBaseSDK()
+    let dataBaseName = 'download_queue';
+    let completedData = await dbSDK.findDocs(dataBaseName, {
+        'selector': {
+            'status': STATUS.Completed
+        }
+    }).catch(err => {
+        logger.error(`reconciliation database call to get the completed docs ${err}`);
+    })
+    if (_.get(completedData, 'docs') && !_.isEmpty(completedData.docs)) {
+        for (let doc of completedData.docs) {
+            let eventDoc = _.cloneDeep(doc);
+            eventDoc.id = doc._id
+            delete eventDoc._id;
+            delete eventDoc._rev;
+            delete eventDoc.pluginId;
+            delete eventDoc.statusMsg
+            EventManager.emit(`${doc.pluginId}:download:complete`, eventDoc);
+            await dbSDK.updateDoc(dataBaseName, doc._id, { status: STATUS.EventEmitted })
+        }
+    }
 
-    // try {
-
-    //     @Inject
-    //     const dbSDK: DataBaseSDK;
-    //     let completedDocs = await 
-    // } catch (error) {
-    //     logger.error('while executing download manager reconciliation', error)
-    // }
-
-    // Emit the events for downloaded files which are not emitted the events
-
-    // Add the downloads to queue if the files are having status Submitted, In-Progress
-    // By invoking the resume method in downloadManager with downloadIds
+    let pendingDownloads = await dbSDK.findDocs(dataBaseName, {
+        'selector': {
+            'status': {
+                "$in": [STATUS.Submitted, STATUS.InProgress]
+            }
+        }
+    }).catch(err => {
+        logger.error('reconciliation database call to get the completed docs ', err);
+    })
+    if (_.get(pendingDownloads, 'docs') && !_.isEmpty(pendingDownloads.docs)) {
+        for (let doc of pendingDownloads.docs) {
+            let downloadManager = new DownloadManager(doc.pluginId);
+            await downloadManager.resume(doc._id).catch(err => {
+                logger.error(`while adding the pending items to download queue ${JSON.stringify(doc)} err: ${err}`)
+            });
+        }
+    }
 }

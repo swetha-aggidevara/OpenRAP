@@ -2,6 +2,7 @@ import { DataBaseSDK } from './sdks/DataBaseSDK';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
+import { reconciliation } from './managers/DownloadManager/DownloadManager';
 
 
 
@@ -30,7 +31,6 @@ export const bootstrap = async () => {
             }
         }
     }
-
-
+    await reconciliation()
 }
 
