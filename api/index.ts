@@ -30,8 +30,9 @@ class ContainerAPI {
 
     // get file SDK by plugin
 
-    public getFileSDKInstance(pluginId: string) {
-        return new FileSDK(pluginId)
+    public getFileSDKInstance(pluginId: string): FileSDK {
+        let fileSDK = new FileSDK(pluginId)
+        return fileSDK;
     }
 
     // get the Network SDK 

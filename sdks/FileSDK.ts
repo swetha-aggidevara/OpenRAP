@@ -21,7 +21,7 @@ export default class FileSDK {
 
     constructor(pluginId: string) {
         this.pluginId = pluginId;
-        this.prefixPath = path.join(__dirname, '..', this.pluginId);
+        this.prefixPath = path.join(__dirname, "..", "..", "..", "..", this.pluginId);
     }
 
     /**
