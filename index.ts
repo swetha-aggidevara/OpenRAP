@@ -10,7 +10,7 @@ import { reconciliation } from './managers/DownloadManager/DownloadManager';
 export const bootstrap = async () => {
 
     let envs = JSON.parse(fs.readFileSync(path.join(__dirname, 'env.json'), { encoding: 'utf-8' }));
-    _.forEach(envs, function (value, key) {
+    _.forEach(envs, (value, key) => {
         process.env[key] = value;
     });
 

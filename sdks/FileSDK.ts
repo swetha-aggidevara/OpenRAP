@@ -77,11 +77,11 @@ export default class FileSDK {
             let output = fs.createWriteStream(path.join(this.prefixPath, fileName));
             let archive = archiver('zip');
 
-            output.on('close', function () {
+            output.on('close', () => {
                 resolve()
             });
 
-            archive.on('warning', function (err) {
+            archive.on('warning', (err) => {
                 if (err.code === 'ENOENT') {
                     // log warning
                 } else {
@@ -89,7 +89,7 @@ export default class FileSDK {
                 }
             });
 
-            archive.on('error', function (err) {
+            archive.on('error', (err) => {
                 reject(err);
             });
             archive.pipe(output);
@@ -120,16 +120,16 @@ export default class FileSDK {
         let destFolderName = path.join(this.prefixPath, destPath);
         let srcFilePath = path.join(this.prefixPath, filePath);
         if (extractToFolder) {
-            destFolderName = path.join(destPath, path.basename(filePath, path.extname(filePath)))
+            destFolderName = path.join(destFolderName, path.basename(filePath, path.extname(filePath)))
         }
 
         return new Promise((resolve, reject) => {
             let unzipper = new DecompressZip(srcFilePath)
-            unzipper.on('error', function (err: any) {
+            unzipper.on('error', (err: any) => {
                 reject(err.message)
             });
 
-            unzipper.on('extract', function () {
+            unzipper.on('extract', () => {
                 resolve(path.join(destFolderName))
             });
 
