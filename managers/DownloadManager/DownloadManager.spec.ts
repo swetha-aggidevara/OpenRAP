@@ -13,11 +13,11 @@ let fileSDK = new FileSDK('testplugindownload');
 describe('DownloadManager', () => {
     before(async () => {
         process.env.COUCHDB_URL = 'http://admin:password@localhost:5984';
-        await containerAPI.bootstrap()
     })
 
     it('should download multiple files successfully', function (done) {
         this.timeout(10000);
+        this.downloadId = ""
         downloadManager.download([{
             id: 'do_312589002481041408120510',
             url: 'https://ntpproductionall.blob.core.windows.net/ntp-content-production/ecar_files/do_312589002481041408120510/aarthik-vikaas-kii-smjh_1554523454637_do_312589002481041408120510_2.0_spine.ecar',
@@ -27,11 +27,12 @@ describe('DownloadManager', () => {
             url: 'https://ntpproductionall.blob.core.windows.net/ntp-content-production/ecar_files/do_312588883252060160117745/raindrops_1554477690491_do_312588883252060160117745_2.0_spine.ecar',
             size: 267849
         }], 'ecars').then(downloadId => {
+            this.downloadId = downloadId;
             expect(downloadId).to.be.string;
-        })
+        });
         EventManager.subscribe(`testplugindownload:download:complete`, (data) => {
             expect(data.status).to.be.equal('COMPLETED')
-            if (!_.isEmpty(_.find(data.files, { 'id': 'do_312589002481041408120510' }))) {
+            if (data.id === this.downloadId) {
                 done()
             }
         })
@@ -125,6 +126,5 @@ describe('DownloadManager', () => {
 
 
     after(() => {
-        fileSDK.remove('')
     })
 })

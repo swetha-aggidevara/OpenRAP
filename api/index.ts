@@ -31,8 +31,8 @@ class ContainerAPI {
     // get file SDK by plugin
 
     public getFileSDKInstance(pluginId: string): FileSDK {
-        let fileSDK = new FileSDK(pluginId)
-        return fileSDK;
+        return new FileSDK(pluginId)
+
     }
 
     // get the Network SDK 
@@ -44,7 +44,7 @@ class ContainerAPI {
 
     // get the downloadManager Instance
 
-    public async getDownloadManagerInstance(pluginId: string): Promise<DownloadManager> {
+    public getDownloadManagerInstance(pluginId: string): DownloadManager {
         return new DownloadManager(pluginId);
     }
 

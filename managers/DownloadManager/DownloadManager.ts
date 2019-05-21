@@ -268,7 +268,7 @@ export default class DownloadManager {
         let doc = await this.dbSDK.getDoc(this.dataBaseName, downloadId).catch(err => {
             logger.error(`while getting the doc to resume doc_id ${downloadId}, err: ${err}`)
         });
-
+        let addedToQueue = false;
         if (!_.isEmpty(doc)) {
             for (let file of doc.files) {
                 if (file.size > file.downloaded) {
@@ -279,12 +279,19 @@ export default class DownloadManager {
                     }
                     // while adding to queue we will prefix with docId if same content is requested again we will download it again
                     try {
-                        this.downloadManagerHelper.queueDownload(`${doc._id}_${file.id}`, doc.pluginId, locations, this.downloadManagerHelper.downloadObserver(file.id, doc._id));
-                        await this.dbSDK.updateDoc(this.dataBaseName, doc._id, { updatedOn: Date.now() });
+                        let downloadQueue = this.downloadQueue()
+                        let key = `${doc._id}_${file.id}`;
+                        if (!_.find(downloadQueue, { 'key': key })) {
+                            addedToQueue = true;
+                            this.downloadManagerHelper.queueDownload(key, doc.pluginId, locations, this.downloadManagerHelper.downloadObserver(file.id, doc._id));
+                        }
                     } catch (error) {
                         logger.error(`while adding to queue doc ${JSON.stringify(doc)}, error : ${error}`)
                     }
                 }
+            }
+            if (addedToQueue) {
+                await this.dbSDK.updateDoc(this.dataBaseName, doc._id, { updatedOn: Date.now() });
             }
         }
     }
