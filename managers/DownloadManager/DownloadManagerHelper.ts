@@ -21,7 +21,7 @@ export class DownloadManagerHelper {
     constructor() {
         // initialize the su downloader3 schedular
         let options = {
-            threads: 4,
+            threads: 1, // TODO: if threads are morethan one the unzip is failing due to partial combined
             throttleRate: 5000
         }
 
