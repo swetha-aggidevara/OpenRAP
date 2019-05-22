@@ -107,15 +107,21 @@ export class DownloadManagerHelper {
                     status: STATUS.Failed,
                     statusMsg: STATUS_MESSAGE.Failed,
                     updatedOn: Date.now()
+                }).then(() => {
+                    return this.dbSDK.getDoc(this.dataBaseName, docId)
+                }).then(doc => {
+                    let pluginId = doc.pluginId;
+                    delete doc.pluginId;
+                    delete doc.statusMsg;
+                    delete doc._rev;
+                    doc.id = doc._id;
+                    delete doc._id;
+                    doc.status = STATUS.Completed;
+                    EventManager.emit(`${pluginId}:download:failed`, doc);
+                    logger.error('Error', e, 'context:', JSON.stringify(doc));
+                }).catch(e => {
+                    logger.error('Error', e, 'context-error:', e, 'docId', docId, 'fileId', downloadId);
                 })
-                    .then(() => {
-                        return this.dbSDK.getDoc(this.dataBaseName, docId)
-                    })
-                    .then(doc => {
-                        logger.error('Error', e, 'context:', JSON.stringify(doc));
-                    }).catch(e => {
-                        logger.error('Error', e, 'context-error:', e, 'docId', docId, 'fileId', downloadId);
-                    })
 
                 // Emit the event on error
             },
