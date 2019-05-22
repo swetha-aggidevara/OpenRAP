@@ -146,8 +146,9 @@ export class DownloadManagerHelper {
                             updatedOn: now
                         })
                         let pluginId = doc.pluginId;
-                        _.omit(doc, ['pluginId', 'statusMsg', '_rev']);
-
+                        delete doc.pluginId;
+                        delete doc.statusMsg;
+                        delete doc._rev;
                         doc.id = doc._id;
                         delete doc._id;
                         doc.status = STATUS.Completed;

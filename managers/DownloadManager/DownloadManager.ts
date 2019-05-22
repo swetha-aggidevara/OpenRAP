@@ -163,9 +163,11 @@ export default class DownloadManager {
      */
     get = async (downloadId: string): Promise<DownloadObject> => {
         // Read status of the request with downloadId and return downloadObject
-        let downloadObject: DownloadObject;
+        let downloadObject;
         downloadObject = await this.dbSDK.getDoc(this.dataBaseName, downloadId);
-        _.omit(downloadObject, ['pluginId', 'statusMsg', '_rev'])
+        delete downloadObject.pluginId;
+        delete downloadObject.statusMsg;
+        delete downloadObject._rev;
         downloadObject.id = downloadObject['_id'];
         delete downloadObject['_id'];
         return Promise.resolve(downloadObject);
