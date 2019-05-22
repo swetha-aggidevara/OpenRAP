@@ -265,6 +265,34 @@ export default class DownloadManager {
         return Promise.resolve(downloadObjects);
     }
 
+    /*
+     * Method to list the download queue based on the status
+     * @param status String - The status of the download - Submitted, Complete, InProgress, Failed. Blank option will return all status
+     * @return Array - Array of download objects
+     */
+    search = async (filter: string): Promise<DownloadObject[]> => {
+        // get the list of items from database if status is provided otherwise get all the status
+        let downloadObjects: DownloadObject[] = [];
+        let selector = {
+            selector: {}
+        }
+        if (status) {
+            selector = {
+                selector: filter
+            }
+        }
+        let { docs } = await this.dbSDK.findDocs(this.dataBaseName, selector)
+        downloadObjects = _.map(docs, doc => {
+            doc.id = doc['_id'];
+            delete doc['_id'];
+            delete doc['pluginId'];
+            delete doc['statusMsg'];
+            delete doc['_rev'];
+            return doc;
+        })
+        return Promise.resolve(downloadObjects);
+    }
+
     async resume(downloadId: string) {
         // get the data from db with download id
         let doc = await this.dbSDK.getDoc(this.dataBaseName, downloadId).catch(err => {
