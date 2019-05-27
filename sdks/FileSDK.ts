@@ -71,10 +71,10 @@ export default class FileSDK {
     }
 
 
-    zip(Path: string, fileName: string) {
+    zip(Path: string, destPath: string, fileName: string) {
 
         return new Promise((resolve, reject) => {
-            let output = fs.createWriteStream(path.join(this.prefixPath, fileName));
+            let output = fs.createWriteStream(path.join(this.prefixPath, destPath, fileName));
             let archive = archiver('zip');
 
             output.on('close', () => {

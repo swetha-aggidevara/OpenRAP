@@ -116,7 +116,6 @@ export class DownloadManagerHelper {
                     delete doc._rev;
                     doc.id = doc._id;
                     delete doc._id;
-                    doc.status = STATUS.Completed;
                     EventManager.emit(`${pluginId}:download:failed`, doc);
                     logger.error('Error', e, 'context:', JSON.stringify(doc));
                 }).catch(e => {

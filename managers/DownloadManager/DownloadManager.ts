@@ -238,18 +238,24 @@ export default class DownloadManager {
      * @param status String - The status of the download - Submitted, Complete, InProgress, Failed. Blank option will return all status
      * @return Array - Array of download objects
      */
-    list = async (status?: string): Promise<DownloadObject[]> => {
+    list = async (status?: Array<string>): Promise<DownloadObject[]> => {
         // get the list of items from database if status is provided otherwise get all the status
         let downloadObjects: DownloadObject[] = [];
         let selector = {
-            selector: {}
+            selector: {},
+            fields: [
+                "status",
+                "createdOn",
+                "updatedOn",
+                "stats",
+                "files",
+                "_id"
+            ]
         }
         if (status) {
-            selector = {
-                selector: {
-                    status: {
-                        "$in": [status as STATUS]
-                    }
+            selector.selector = {
+                status: {
+                    "$in": status
                 }
             }
         }
@@ -257,37 +263,6 @@ export default class DownloadManager {
         downloadObjects = _.map(docs, doc => {
             doc.id = doc['_id'];
             delete doc['_id'];
-            delete doc['pluginId'];
-            delete doc['statusMsg'];
-            delete doc['_rev'];
-            return doc;
-        })
-        return Promise.resolve(downloadObjects);
-    }
-
-    /*
-     * Method to list the download queue based on the status
-     * @param status String - The status of the download - Submitted, Complete, InProgress, Failed. Blank option will return all status
-     * @return Array - Array of download objects
-     */
-    search = async (filter: string): Promise<DownloadObject[]> => {
-        // get the list of items from database if status is provided otherwise get all the status
-        let downloadObjects: DownloadObject[] = [];
-        let selector = {
-            selector: {}
-        }
-        if (status) {
-            selector = {
-                selector: filter
-            }
-        }
-        let { docs } = await this.dbSDK.findDocs(this.dataBaseName, selector)
-        downloadObjects = _.map(docs, doc => {
-            doc.id = doc['_id'];
-            delete doc['_id'];
-            delete doc['pluginId'];
-            delete doc['statusMsg'];
-            delete doc['_rev'];
             return doc;
         })
         return Promise.resolve(downloadObjects);
