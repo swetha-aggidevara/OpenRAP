@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
 import { reconciliation } from './managers/DownloadManager/DownloadManager';
+import NetworkSDK from './sdks/NetworkSDK';
 
 
 
@@ -32,5 +33,11 @@ export const bootstrap = async () => {
         }
     }
     await reconciliation()
+
+    // initialize the network sdk to emit the internet available or disconnected events
+    new NetworkSDK()
+
+
+
 }
 

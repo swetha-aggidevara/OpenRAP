@@ -8,7 +8,7 @@ import { PluginConfig } from '../interfaces';
 import { register } from '../sdks/GlobalSDK';
 import SettingSDK from '../sdks/SettingSDK';
 import FileSDK from '../sdks/FileSDK';
-import { isInternetAvailable } from '../sdks/NetworkSDK';
+import NetworkSDK from '../sdks/NetworkSDK';
 import DownloadManager from '../managers/DownloadManager/DownloadManager';
 
 @Singleton
@@ -38,7 +38,8 @@ class ContainerAPI {
     // get the Network SDK 
 
     public async getNetworkStatus(url: string): Promise<boolean> {
-        let status: boolean = await isInternetAvailable(url)
+        let networkSDK = new NetworkSDK();
+        let status: boolean = await networkSDK.isInternetAvailable(url)
         return status;
     }
 

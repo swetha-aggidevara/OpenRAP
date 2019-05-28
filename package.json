@@ -38,7 +38,6 @@
     "body-parser": "^1.18.2",
     "chokidar": "^3.0.0",
     "decompress-zip": "^0.2.2",
-    "dns": "^0.2.2",
     "express": "^4.16.3",
     "fs-extra": "^7.0.1",
     "hashids": "^1.2.2",
