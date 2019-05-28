@@ -69,7 +69,7 @@ describe('DownloadManager', () => {
     })
 
     it('should get the downloadObjects with EVENTEMITTED status', function (done) {
-        downloadManager.list('EVENTEMITTED').then(downloadObjects => {
+        downloadManager.list(['EVENTEMITTED']).then(downloadObjects => {
             let flag = true;
             downloadObjects.forEach(d => {
                 if (!(d.status === 'EVENTEMITTED')) flag = false;
@@ -80,7 +80,7 @@ describe('DownloadManager', () => {
     })
 
     it('should get the downloadObject', function (done) {
-        downloadManager.list('EVENTEMITTED').then(downloadObjects => {
+        downloadManager.list(['EVENTEMITTED']).then(downloadObjects => {
             return downloadManager.get(downloadObjects[0]['id'])
         }).then(data => {
             expect(data.status === 'EVENTEMITTED').to.be.true;

@@ -77,7 +77,7 @@ export default class FileSDK {
             let output = fs.createWriteStream(path.join(this.prefixPath, destPath, fileName));
             let archive = archiver('zip');
 
-            output.on('close', () => {
+            output.on('finish', () => {
                 resolve()
             });
 
@@ -94,14 +94,22 @@ export default class FileSDK {
             });
             archive.pipe(output);
 
-            //here we consider that if Path is having extension then append as stream otherwise add the folders to archiver.
-            if (path.extname(Path)) {
-                let file = path.join(this.prefixPath, Path);
-                archive.append(fs.createReadStream(file), { name: path.basename(Path) });
-            } else {
-                archive.directory(path.join(this.prefixPath, Path), false);
-            }
-            archive.finalize()
+            let file = path.join(this.prefixPath, Path);
+            fs.lstat(file, (error, stats) => {
+                if (error) { reject(error) }
+                else {
+                    if (stats.isFile()) {
+                        let file = path.join(this.prefixPath, Path);
+                        archive.append(fs.createReadStream(file), { name: path.basename(Path) });
+                    }
+                    else {
+                        archive.directory(path.join(this.prefixPath, Path), false);
+                    }
+                    //here we consider that if Path is having extension then append as stream otherwise add the folders to archiver.
+
+                    archive.finalize();
+                }
+            })
         })
     };
 

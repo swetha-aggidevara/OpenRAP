@@ -47,8 +47,7 @@ describe('FileSDK', () => {
 
   it('should zip file', async () => {
     let src = path.join('test1', 'test.txt');
-    let dest = path.join('test1', 'test.zip');
-    await fileSDK.zip(src, dest);
+    await fileSDK.zip(src, 'test1', 'test.zip');
   })
 
   it('should unzip file', async () => {
@@ -60,7 +59,7 @@ describe('FileSDK', () => {
   it('should zip folder', async () => {
     let src = 'test1';
     let dest = 'test-folder.zip';
-    await fileSDK.zip(src, dest);
+    await fileSDK.zip(src, 'test1', dest);
   })
 
   it('should unzip folder', async () => {
