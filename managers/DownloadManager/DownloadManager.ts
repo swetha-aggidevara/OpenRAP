@@ -54,6 +54,18 @@ export default class DownloadManager {
     constructor(pluginId: string) {
         this.pluginId = pluginId;
         this.fileSDK = new FileSDK(pluginId);
+
+
+        // listen to network events to pause and start the downloads
+
+        EventManager.subscribe('network:available', () => {
+            this.downloadManagerHelper.resumeDownload()
+        });
+
+        EventManager.subscribe('network:disconnected', () => {
+            this.downloadManagerHelper.pauseAll(true)
+        });
+
     }
     /*
             * Method to queue the download of a file

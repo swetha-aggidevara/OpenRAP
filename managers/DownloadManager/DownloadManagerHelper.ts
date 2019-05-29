@@ -22,7 +22,8 @@ export class DownloadManagerHelper {
         // initialize the su downloader3 schedular
         let options = {
             threads: 1, // TODO: if threads are morethan one the unzip is failing due to partial combined
-            throttleRate: 5000
+            throttleRate: 5000,
+            timeout: 60000
         }
 
         let schedulerOptions = {
@@ -46,8 +47,8 @@ export class DownloadManagerHelper {
         return this.suDScheduler.killDownload(downloadId);
     };
 
-    pauseAll = (): void => {
-        this.suDScheduler.pauseAll();
+    pauseAll = (stop: boolean = false): void => {
+        this.suDScheduler.pauseAll(stop);
     };
 
     cancelAll = (): boolean => {
@@ -64,6 +65,9 @@ export class DownloadManagerHelper {
         return this.suDScheduler.taskQueue;
     }
 
+    resumeDownload = () => {
+        this.suDScheduler.startQueue();
+    }
     downloadObserver = (downloadId: string, docId: string) => {
         return ({
             next: progressInfo => {
@@ -140,15 +144,6 @@ export class DownloadManagerHelper {
                                 file.downloaded = file.size;
                             }
                             return file;
-                        })
-                        let now = Date.now()
-                        doc.updatedOn = now;
-                        await this.dbSDK.updateDoc(this.dataBaseName, docId, {
-                            status: STATUS.Completed,
-                            statusMsg: STATUS_MESSAGE.Completed,
-                            files: doc.files,
-                            stats: doc.stats,
-                            updatedOn: now
                         })
                         let pluginId = doc.pluginId;
                         delete doc.pluginId;
