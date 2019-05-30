@@ -4,16 +4,16 @@ import * as path from 'path';
 import * as _ from 'lodash';
 import { reconciliation } from './managers/DownloadManager/DownloadManager';
 import NetworkSDK from './sdks/NetworkSDK';
+import { TelemetrySyncManager } from './managers/TelemetrySyncManager';
 
-
-
-// Initialize container
-export const bootstrap = async () => {
-
+const initializeEnv = () => {
     let envs = JSON.parse(fs.readFileSync(path.join(__dirname, 'env.json'), { encoding: 'utf-8' }));
     _.forEach(envs, (value, key) => {
         process.env[key] = value;
     });
+}
+// Initialize container
+const bootstrap = async () => {
 
     // create databases for the container 
     let dataBase = new DataBaseSDK();
@@ -33,11 +33,13 @@ export const bootstrap = async () => {
         }
     }
     await reconciliation()
-
+    const telemetrySyncManager = new TelemetrySyncManager();
+    setTimeout(() => telemetrySyncManager.batchJob(), 1000);
     // initialize the network sdk to emit the internet available or disconnected events
     new NetworkSDK()
 
-
-
 }
-
+export {
+    initializeEnv,
+    bootstrap
+}
