@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { register, get } from './GlobalSDK';
+import { register, get, list } from './GlobalSDK';
 import * as _ from 'lodash';
 
 describe('GlobalSDK', () => {
@@ -23,6 +23,14 @@ describe('GlobalSDK', () => {
                 apiBaseURL: "https://www.sunbird.org",
                 apiTokenRefreshFn: 'refreshToken'
             })).to.be.true;
+            done()
+        })
+    })
+
+
+    it('should return the list of the plugins', (done) => {
+        list().then(plugins => {
+            expect(plugins.length > 0).to.be.true;
             done()
         })
     })
