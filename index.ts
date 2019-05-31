@@ -34,7 +34,8 @@ const bootstrap = async () => {
     }
     await reconciliation()
     const telemetrySyncManager = new TelemetrySyncManager();
-    setTimeout(() => telemetrySyncManager.batchJob(), 1000);
+    setTimeout(() => telemetrySyncManager.batchJob(), 30000);
+    setTimeout(() => telemetrySyncManager.syncJob(), 30000);
     // initialize the network sdk to emit the internet available or disconnected events
     new NetworkSDK()
 
