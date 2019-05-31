@@ -75,7 +75,7 @@ export class TelemetrySyncManager {
     async syncJob() {
         const networkStatus = await this.networkSDK.isInternetAvailable().catch(status => false);
         if (!networkStatus) { // check network connectivity with plugin api base url since we try to sync to that endpoint
-            console.log('sync job failed: network not available');
+            logger.warn('sync job failed: network not available');
             return;
         }
         let apiKey = '';
@@ -83,15 +83,14 @@ export class TelemetrySyncManager {
         try {
             let { api_key } = await this.databaseSdk.getDoc('settings', 'device_token');
             apiKey = api_key;
-            apiKey
         } catch (error) {
-            logger.warn('device token is not set getting it from api');
+            logger.warn('device token is not set getting it from api', error);
             apiKey = await this.getAPIToken(machineIdSync()).catch(err => logger.error(`while getting the token ${err}`));
         }
 
 
         if (!apiKey) {
-            console.log('sync job failed: api_key not available');
+            logger.error('sync job failed: api_key not available');
             return;
         }
         let dbFilters = {
@@ -101,8 +100,8 @@ export class TelemetrySyncManager {
             limit: 100
         }
         const telemetryPackets = await this.databaseSdk.findDocs('telemetry_packets', dbFilters) // get the batches from batch table where sync status is false
-            .catch(error => console.log('fetching telemetryPackets failed', error));
-        console.log('telemetryPackets length', telemetryPackets.docs.length);
+            .catch(error => logger.error('fetching telemetryPackets failed', error));
+        logger.info('telemetryPackets length', telemetryPackets.docs.length);
         if (!telemetryPackets.docs.length) {
             return;
         }
