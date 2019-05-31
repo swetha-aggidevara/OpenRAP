@@ -4,7 +4,7 @@
   "description": "OpenRAP Software",
   "main": "dist/main.js",
   "scripts": {
-    "build": "rm -rf dist && tsc && cp env.json ./dist && cp package.json ./dist && cp -r db ./dist/db",
+    "build": "rimraf -rf dist && tsc && cpy env.json ./dist && cpy package.json ./dist && cpy  ./db/ ./dist/db/",
     "test": "nyc --reporter=html --reporter=text mocha --exit -r ts-node/register **/**/*.spec.ts **/*.spec.ts *.spec.ts"
   },
   "nyc": {
@@ -63,8 +63,10 @@
     "@types/unzipper": "^0.9.1",
     "@types/uuid": "^3.4.4",
     "chai": "^4.2.0",
+    "cpy-cli": "^2.0.0",
     "mocha": "^6.1.4",
     "nyc": "^14.1.1",
+    "rimraf": "^2.6.3",
     "ts-node": "^8.1.0",
     "typescript": "^2.8.4",
     "uuid": "^3.3.2"
