@@ -6,13 +6,13 @@ import { DataBaseSDK } from "../sdks/DataBaseSDK";
 import { Inject, Singleton } from "typescript-ioc";
 import * as _ from 'lodash';
 import axios from 'axios';
-import {machineId, machineIdSync} from 'node-machine-id';
+import { machineId, machineIdSync } from 'node-machine-id';
 import { logger } from "@project-sunbird/ext-framework-server/logger";
 import { FrameworkAPI } from "@project-sunbird/ext-framework-server/api";
 import * as jwt from 'jsonwebtoken';
 import { list } from '../sdks/GlobalSDK';
 import NetworkSDK from '../sdks/NetworkSDK';
-const TELEMETRY_PACKET_SIZE = 200;
+
 @Singleton
 export class TelemetrySyncManager {
 
@@ -22,68 +22,61 @@ export class TelemetrySyncManager {
     private frameworkAPI: FrameworkAPI;
     @Inject
     private networkSDK: NetworkSDK;
+    private TELEMETRY_PACKET_SIZE = parseInt(process.env.TELEMETRY_PACKET_SIZE) || 200;
 
-    async batchJob () {
+    async batchJob() {
         const pluginDetails = await list().catch(() => { // get the plugins from global registry
-            console.log('fetching plugins failed');
             return [];
         });
-        console.log('all plugin Details', pluginDetails);
-        if(!pluginDetails.length){
+        if (!pluginDetails.length) {
             return;
         }
         _.forEach(pluginDetails, (pluginDetail) => {
-            console.log('each plugin id', pluginDetail.id);
             const pluginDbInstance = this.frameworkAPI.getCouchDBInstance(pluginDetail.id);
-            console.log(pluginDbInstance);
             this.createTelemetryPacket(pluginDbInstance) // telemetry events by plugin from plugin's  and create the packet
         })
-        console.log('migrating openRap plugin');
         this.createTelemetryPacket(this.databaseSdk.connection);// createTelemetryPacket job for OpenRap telemetry events
     }
-    async createTelemetryPacket(pluginDbInstance){
-        console.log('creating telemetry packets');
+    async createTelemetryPacket(pluginDbInstance) {
         let dbFilters = {
             selector: {},
-            limit: TELEMETRY_PACKET_SIZE * 10
+            limit: this.TELEMETRY_PACKET_SIZE * 10
         }
         const telemetryEvents = await pluginDbInstance.db.use('telemetry').find(dbFilters)
-        .catch(error => console.log('fetching telemetryEvents failed', error));
+            .catch(error => console.log('fetching telemetryEvents failed', error));
         console.log('telemetry events length', telemetryEvents.docs.length);
-    
-        if(!telemetryEvents.docs.length){
+
+        if (!telemetryEvents.docs.length) {
             return;
         }
-        const packets = _.chunk(telemetryEvents.docs, TELEMETRY_PACKET_SIZE).map(data => ({
+        const packets = _.chunk(telemetryEvents.docs, this.TELEMETRY_PACKET_SIZE).map(data => ({
             pluginId: 'pluginId', // need to be changed
-            syncStatus: true,
+            syncStatus: false,
             createdOn: Date.now(),
             updateOn: Date.now(),
             events: data
         }));
-        console.log('telemetry packets created', packets.length);
         await this.databaseSdk.bulkDocs('telemetry_packets', packets) // insert the batch into batch table with plugin-Id and sync status as false
-        .catch(error => console.log('creating packets', error));
-    
+            .catch(error => console.log('creating packets', error));
+
         const deleteEvents = _.map(telemetryEvents.docs, data => ({
-            "_id" : data._id,
+            "_id": data._id,
             "_rev": data._rev,
             "_deleted": true
         }))
-        await pluginDbInstance.db.use('telemetry').bulk({docs: deleteEvents})  // clean the events in the plugin telemetry table
-        .catch(error => console.log('deleting telemetry events failed', error));
+        await pluginDbInstance.db.use('telemetry').bulk({ docs: deleteEvents })  // clean the events in the plugin telemetry table
+            .catch(error => console.log('deleting telemetry events failed', error));
         this.createTelemetryPacket(pluginDbInstance);
     }
 
     async syncJob() {
-        console.log('syncing telemetry packets'); // get the plugin info from global SDK
         const networkStatus = await this.networkSDK.isInternetAvailable().catch(status => false);
-        if(!networkStatus){ // check network connectivity with plugin api base url since we try to sync to that endpoint
+        if (!networkStatus) { // check network connectivity with plugin api base url since we try to sync to that endpoint
             console.log('sync job failed: network not available');
             return;
         }
         const apiKey = await this.getAPIToken(machineIdSync()).catch(err => undefined);
-        if(!apiKey){
+        if (!apiKey) {
             console.log('sync job failed: api_key not available');
             return;
         }
@@ -92,12 +85,12 @@ export class TelemetrySyncManager {
             limit: 10
         }
         const telemetryPackets = await this.databaseSdk.findDocs('telemetry_packets', dbFilters) // get the batches from batch table where sync status is false
-        .catch(error => console.log('fetching telemetryPackets failed', error));
+            .catch(error => console.log('fetching telemetryPackets failed', error));
         console.log('telemetryPackets length', telemetryPackets.docs.length);
-        if(!telemetryPackets.docs.length){
+        if (!telemetryPackets.docs.length) {
             return;
         }
-        for(const telemetryPacket of telemetryPackets) {
+        for (const telemetryPacket of telemetryPackets) {
             await this.makeSyncApiCall(telemetryPacket.events, apiKey).then(data => { // sync each packet to the plugins  api base url 
                 console.log('telemetry synced'); // on successful sync update the batch sync status to true
             }).catch(err => {
@@ -105,7 +98,7 @@ export class TelemetrySyncManager {
             });
         }
     }
-    async makeSyncApiCall(events, apiKey){
+    async makeSyncApiCall(events, apiKey) {
         console.log('syncing telemetry');
         let headers = {
             'Content-Type': 'application/json',
