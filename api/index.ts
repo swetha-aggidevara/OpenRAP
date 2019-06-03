@@ -3,7 +3,7 @@
  */
 
 import { Singleton } from 'typescript-ioc';
-import { bootstrap, initializeEnv } from './../index'
+import { bootstrap } from './../index'
 import { PluginConfig } from '../interfaces';
 import { register } from '../sdks/GlobalSDK';
 import SettingSDK from '../sdks/SettingSDK';
@@ -17,9 +17,7 @@ class ContainerAPI {
     public async bootstrap() {
         await bootstrap();
     }
-    public initializeEnv() {
-        initializeEnv()
-    }
+
     public async register(pluginId: string, pluginInfo: PluginConfig) {
         await register(pluginId, pluginInfo);
     }

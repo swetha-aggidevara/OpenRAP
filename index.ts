@@ -6,12 +6,6 @@ import { reconciliation } from './managers/DownloadManager/DownloadManager';
 import NetworkSDK from './sdks/NetworkSDK';
 import { TelemetrySyncManager } from './managers/TelemetrySyncManager';
 
-const initializeEnv = () => {
-    let envs = JSON.parse(fs.readFileSync(path.join(__dirname, 'env.json'), { encoding: 'utf-8' }));
-    _.forEach(envs, (value, key) => {
-        process.env[key] = value;
-    });
-}
 // Initialize container
 const bootstrap = async () => {
 
@@ -41,6 +35,5 @@ const bootstrap = async () => {
 
 }
 export {
-    initializeEnv,
     bootstrap
 }
