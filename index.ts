@@ -11,15 +11,13 @@ const bootstrap = async () => {
 
     // create databases for the container 
     let dataBase = new DataBaseSDK();
-    let dbList = await dataBase.listDBs();
     let schema = JSON.parse(fs.readFileSync(path.join(__dirname, 'db', 'schemas.json'), { encoding: 'utf8' }))
     let databases = schema.databases;
-    let filteredDbs = databases.filter((db) => { return dbList.indexOf(db.name) === -1; });
-    for (const db of filteredDbs) {
-        await dataBase.createDB(db.name);
+    for (const db of databases) {
+        dataBase.createDB(db.name);
     }
 
-    for (const db of filteredDbs) {
+    for (const db of databases) {
         if (!_.isEmpty(db['indexes'])) {
             for (const index of db.indexes) {
                 await dataBase.createIndex(db.name, index)

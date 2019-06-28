@@ -10,4 +10,24 @@ export default class SystemSDK {
     getDeviceId() {
         return this.deviceId;
     }
+
+    getDiskSpaceInfo() {
+
+    }
+
+    getMemoryInfo() {
+
+    }
+
+    getDeviceInfo() {
+        {
+
+        }
+    }
+
+
+    getAll() {
+
+    }
+
 }

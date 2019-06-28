@@ -8,6 +8,7 @@ import axios from 'axios';
 import * as jwt from 'jsonwebtoken';
 import { TelemetryHelper } from './telemetry-helper';
 import { machineIdSync } from 'node-machine-id';
+import SystemSDK from "../../sdks/SystemSDK";
 
 let uuid = require('uuid/v1')
 
@@ -20,11 +21,12 @@ export class TelemetryService extends TelemetryHelper {
     telemetryBatch = [];
     telemetryConfig: any = {};
     async initialize(pluginId: string) {
+        let systemSDK = new SystemSDK();
         const orgDetails = await this.databaseSdk.getDoc('organization', process.env.CHANNEL);
         // get mode from process env if standalone use machine id as did for client telemetry also
         this.telemetryConfig = {
             userOrgDetails: {
-                userId: 'anonymous',
+                userId: systemSDK.getDeviceId(),
                 rootOrgId: orgDetails.rootOrgId,
                 organisationIds: [orgDetails.hashTagId]
             },
@@ -39,8 +41,8 @@ export class TelemetryService extends TelemetryHelper {
                 apislug: '',
                 sid: uuid(),
                 channel: orgDetails.hashTagId,
-                env: 'offline',
-                enableValidation: true,
+                env: 'container',
+                enableValidation: false,
                 timeDiff: 0,
                 runningEnv: 'server',
                 dispatcher: {
@@ -50,7 +52,7 @@ export class TelemetryService extends TelemetryHelper {
         }
         this.init(this.telemetryConfig);
     }
-    dispatcher(data){
+    dispatcher(data) {
         this.telemetryBatch.push(data);
         console.log('dispatcher called', this.telemetryBatch.length);
         if (this.telemetryBatch.length >= this.telemetryConfig.config.batchsize) {

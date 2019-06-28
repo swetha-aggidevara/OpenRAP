@@ -44,17 +44,17 @@ export class TelemetrySyncManager {
             return;
         }
         _.forEach(pluginDetails, (pluginDetail) => {
-            const pluginDbInstance = this.frameworkAPI.getCouchDBInstance(pluginDetail.id);
-            this.createTelemetryPacket(pluginDbInstance, pluginDetail.id) // telemetry events by plugin from plugin's  and create the packet
+            const pluginDbInstance = this.frameworkAPI.getPouchDBInstance(pluginDetail.id, 'telemetry');
+            this.createTelemetryPacket(pluginDetail, pluginDbInstance) // telemetry events by plugin from plugin's  and create the packet
         })
-        this.createTelemetryPacket(this.databaseSdk.connection, '');// createTelemetryPacket job for OpenRap telemetry events
+        this.createTelemetryPacket('', this.databaseSdk);// createTelemetryPacket job for OpenRap telemetry events
     }
-    async createTelemetryPacket(pluginDbInstance, pluginId: string) {
+    async createTelemetryPacket(pluginId: string, pluginDbInstance) {
         let dbFilters = {
             selector: {},
             limit: this.TELEMETRY_PACKET_SIZE * 10
         }
-        const telemetryEvents = await pluginDbInstance.db.use('telemetry').find(dbFilters)
+        const telemetryEvents = await pluginDbInstance.find(dbFilters)
             .catch(error => logger.error('fetching telemetryEvents failed', error));
         logger.info('telemetry events length', telemetryEvents.docs.length);
 
@@ -87,7 +87,7 @@ export class TelemetrySyncManager {
             "_rev": data._rev,
             "_deleted": true
         }))
-        await pluginDbInstance.db.use('telemetry').bulk({ docs: deleteEvents })  // clean the events in the plugin telemetry table
+        await pluginDbInstance.bulkDocs(deleteEvents)  // clean the events in the plugin telemetry table
             .catch(error => logger.error('deleting telemetry events failed', error));
         this.createTelemetryPacket(pluginDbInstance, pluginId);
     }
@@ -127,7 +127,7 @@ export class TelemetrySyncManager {
                 return;
             }
             for (const telemetryPacket of telemetryPackets.docs) {
-                await this.makeSyncApiCall(telemetryPacket.events, apiKey).then(data => { // sync each packet to the plugins  api base url 
+                await this.makeSyncApiCall(telemetryPacket, apiKey).then(data => { // sync each packet to the plugins  api base url 
                     logger.info(`${data} telemetry synced for  packet ${telemetryPacket._id} of events ${telemetryPacket.events.length}`); // on successful sync update the batch sync status to true
                     return this.databaseSdk.updateDoc('telemetry_packets', telemetryPacket._id, { syncStatus: true });
                 }).catch(err => {
@@ -138,17 +138,16 @@ export class TelemetrySyncManager {
             logger.error(`while running the telemetry sync job ${error}`);
         }
     }
-    async makeSyncApiCall(events, apiKey) {
-        console.log('syncing telemetry');
+    async makeSyncApiCall(packet, apiKey) {
         let headers = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
             'did': this.systemSDK.getDeviceId(),
-            'msgid': uuid.v4()
+            'msgid': packet['_id']
         }
         let body = {
             ts: Date.now(),
-            events: events,
+            events: packet.events,
             id: "api.telemetry",
             ver: "1.0"
         }

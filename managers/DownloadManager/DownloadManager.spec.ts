@@ -12,7 +12,7 @@ let fileSDK = new FileSDK('testplugindownload');
 
 describe('DownloadManager', () => {
     before(async () => {
-        process.env.COUCHDB_URL = 'http://admin:password@localhost:5984';
+        process.env.DATABASE_PATH = __dirname;
     })
 
     it('should download multiple files successfully', function (done) {
