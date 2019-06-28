@@ -120,7 +120,7 @@ export class TelemetrySyncManager {
                 },
                 limit: 100
             }
-            const telemetryPackets = await this.databaseSdk.findDocs('telemetry_packets', dbFilters) // get the batches from batch table where sync status is false
+            const telemetryPackets = await this.databaseSdk.find('telemetry_packets', dbFilters) // get the batches from batch table where sync status is false
                 .catch(error => logger.error('fetching telemetryPackets failed', error));
             logger.info('telemetryPackets length', telemetryPackets.docs.length);
             if (!telemetryPackets.docs.length) {
@@ -158,7 +158,7 @@ export class TelemetrySyncManager {
     async cleanUpJob() {
         try {
             // get the batches from telemetry batch table where sync status is true
-            let { docs: batches = [] } = await this.databaseSdk.findDocs('telemetry_packets', {
+            let { docs: batches = [] } = await this.databaseSdk.find('telemetry_packets', {
                 selector: {
                     syncStatus: true
                 }

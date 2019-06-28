@@ -76,7 +76,7 @@ export class DataBaseSDK {
         return this.getDBInstance(database).bulkDocs(documents);
     }
 
-    findDocs(database: string, searchObj: Object) {
+    find(database: string, searchObj: Object) {
         return this.getDBInstance(database).find(searchObj);
     }
 }

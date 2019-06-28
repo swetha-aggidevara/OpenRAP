@@ -271,7 +271,7 @@ export default class DownloadManager {
                 }
             }
         }
-        let { docs } = await this.dbSDK.findDocs(this.dataBaseName, selector)
+        let { docs } = await this.dbSDK.find(this.dataBaseName, selector)
         downloadObjects = _.map(docs, doc => {
             doc.id = doc['_id'];
             delete doc['_id'];
@@ -324,7 +324,7 @@ export const reconciliation = async () => {
     // Get the data from database where status is completed
     let dbSDK = new DataBaseSDK()
     let dataBaseName = 'download_queue';
-    let completedData = await dbSDK.findDocs(dataBaseName, {
+    let completedData = await dbSDK.find(dataBaseName, {
         'selector': {
             'status': STATUS.Completed
         }
@@ -344,7 +344,7 @@ export const reconciliation = async () => {
         }
     }
 
-    let pendingDownloads = await dbSDK.findDocs(dataBaseName, {
+    let pendingDownloads = await dbSDK.find(dataBaseName, {
         'selector': {
             'status': {
                 "$in": [STATUS.Submitted, STATUS.InProgress]

@@ -37,7 +37,7 @@ export const get = async (pluginId: string): Promise<PluginConfig> => {
  */
 export const list = async (): Promise<PluginConfig[]> => {
     let dbSDK = new DataBaseSDK()
-    let { docs } = await dbSDK.findDocs(databaseName, { selector: {} });
+    let { docs } = await dbSDK.find(databaseName, { selector: {} });
     let pluginConfigs = [];
     _.forEach(docs, (doc) => {
         let pluginConfig = _.omit(doc, ['_id', '_rev']);
