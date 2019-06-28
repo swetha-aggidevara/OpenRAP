@@ -44,19 +44,28 @@ export class TelemetrySyncManager {
             return;
         }
         _.forEach(pluginDetails, (pluginDetail) => {
-            const pluginDbInstance = this.frameworkAPI.getPouchDBInstance(pluginDetail.id, 'telemetry');
-            this.createTelemetryPacket(pluginDetail, pluginDbInstance) // telemetry events by plugin from plugin's  and create the packet
+
+            this.createTelemetryPacket(pluginDetail.id) // telemetry events by plugin from plugin's  and create the packet
         })
-        this.createTelemetryPacket('', this.databaseSdk);// createTelemetryPacket job for OpenRap telemetry events
+        this.createTelemetryPacket('');// createTelemetryPacket job for OpenRap telemetry events
     }
-    async createTelemetryPacket(pluginId: string, pluginDbInstance) {
+    async createTelemetryPacket(pluginId: string) {
         let dbFilters = {
             selector: {},
             limit: this.TELEMETRY_PACKET_SIZE * 10
         }
-        const telemetryEvents = await pluginDbInstance.find(dbFilters)
-            .catch(error => logger.error('fetching telemetryEvents failed', error));
-        logger.info('telemetry events length', telemetryEvents.docs.length);
+        let telemetryEvents = { docs: [] };
+
+        if (pluginId) {
+            let pluginDbInstance = this.frameworkAPI.getPouchDBInstance(pluginId, 'telemetry');
+            telemetryEvents = await pluginDbInstance.find(dbFilters)
+                .catch(error => logger.error('fetching telemetryEvents failed', error));
+            logger.info(`telemetry events length, ${telemetryEvents.docs.length} for plugin: ${pluginId}`);
+        } else {
+            telemetryEvents = await this.databaseSdk.find('telemetry', dbFilters).catch(error => logger.error('fetching telemetryEvents failed', error));
+            logger.info('telemetry events length', telemetryEvents.docs.length);
+        }
+
 
         if (!telemetryEvents.docs.length) {
             return;
@@ -87,9 +96,16 @@ export class TelemetrySyncManager {
             "_rev": data._rev,
             "_deleted": true
         }))
-        await pluginDbInstance.bulkDocs(deleteEvents)  // clean the events in the plugin telemetry table
-            .catch(error => logger.error('deleting telemetry events failed', error));
-        this.createTelemetryPacket(pluginDbInstance, pluginId);
+
+        if (pluginId) {
+            let pluginDbInstance = this.frameworkAPI.getPouchDBInstance(pluginId, 'telemetry');
+            await pluginDbInstance.bulkDocs(deleteEvents)  // clean the events in the plugin telemetry table
+                .catch(error => logger.error('deleting telemetry events failed', error));
+        } else {
+            telemetryEvents = await this.databaseSdk.bulkDocs('telemetry', deleteEvents).catch(error => logger.error('fetching telemetryEvents failed', error));
+            logger.info('deleted telemetry events length', telemetryEvents.docs.length);
+        }
+        this.createTelemetryPacket(pluginId);
     }
 
     async syncJob() {
