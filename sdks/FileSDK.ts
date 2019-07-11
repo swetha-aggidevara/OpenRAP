@@ -21,7 +21,8 @@ export default class FileSDK {
 
     constructor(pluginId: string) {
         this.pluginId = pluginId;
-        this.prefixPath = path.join(__dirname, "..", "..", "..", "..", this.pluginId);
+        let fileBasePath = process.env.FILES_PATH || path.join(__dirname, "..", "..", "..", "..")
+        this.prefixPath = path.join(fileBasePath, this.pluginId);
     }
 
     /**
