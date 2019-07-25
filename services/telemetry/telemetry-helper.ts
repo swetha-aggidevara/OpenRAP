@@ -1,11 +1,22 @@
-import * as _ from 'lodash';
+import * as _ from "lodash";
 import {
-  ITelemetryEvent, ITelemetryContextData, TelemetryObject,IStartEventInput, IImpressionEventInput,
-  IInteractEventInput, IShareEventInput, IErrorEventInput, IEndEventInput, ILogEventInput, ITelemetryContext, IFeedBackEventInput
-} from './ITelemetry';
-import * as telemetrySDK from '@project-sunbird/telemetry-sdk';
-export class TelemetryHelper {
+  ITelemetryEvent,
+  ITelemetryContextData,
+  TelemetryObject,
+  IStartEventInput,
+  IImpressionEventInput,
+  IInteractEventInput,
+  IShareEventInput,
+  IErrorEventInput,
+  IEndEventInput,
+  ILogEventInput,
+  ITelemetryContext,
+  IFeedBackEventInput
+} from "./ITelemetry";
+import * as telemetrySDK from "@project-sunbird/telemetry-sdk";
+import SystemSDK from "../../sdks/SystemSDK";
 
+export class TelemetryHelper {
   /**
    *
    *
@@ -33,6 +44,8 @@ export class TelemetryHelper {
    */
   private isInitialized: Boolean = false;
 
+  private systemSDK: SystemSDK;
+
   /**
    * Creates an instance of TelemetryService.
    * @param {*} telemetryProvider
@@ -40,6 +53,7 @@ export class TelemetryHelper {
    */
   constructor() {
     this.telemetryProvider = telemetrySDK;
+    this.systemSDK = new SystemSDK();
   }
 
   /**
@@ -52,10 +66,13 @@ export class TelemetryHelper {
     this.context = _.cloneDeep(context);
     this.telemetryProvider.initialize(this.context.config);
     this.isInitialized = true;
-    console.log('Telemetry Service is Initialized!', this.context);
+    console.log("Telemetry Service is Initialized!", this.context);
   }
-  getDeviceId(callback) {
-    telemetrySDK.getFingerPrint(callback);
+  getDeviceId(callback?: any) {
+    return (
+      (callback && callback(this.systemSDK.getDeviceId())) ||
+      this.systemSDK.getDeviceId()
+    );
   }
 
   /**
@@ -67,8 +84,13 @@ export class TelemetryHelper {
   public start(startEventInput: IStartEventInput) {
     if (this.isInitialized) {
       const eventData: ITelemetryEvent = this.getEventData(startEventInput);
-      this.telemetryProvider.start(this.context.config, eventData.options.object.id, eventData.options.object.ver,
-        eventData.edata, eventData.options);
+      this.telemetryProvider.start(
+        this.context.config,
+        eventData.options.object.id,
+        eventData.options.object.ver,
+        eventData.edata,
+        eventData.options
+      );
     }
   }
 
@@ -80,7 +102,9 @@ export class TelemetryHelper {
    */
   public impression(impressionEventInput: IImpressionEventInput) {
     if (this.isInitialized) {
-      const eventData: ITelemetryEvent = this.getEventData(impressionEventInput);
+      const eventData: ITelemetryEvent = this.getEventData(
+        impressionEventInput
+      );
       this.telemetryProvider.impression(eventData.edata, eventData.options);
     }
   }
@@ -148,7 +172,6 @@ export class TelemetryHelper {
     }
   }
 
-
   /**
    * Feedback 'feedback' telemetry event
    *
@@ -193,13 +216,14 @@ export class TelemetryHelper {
   private getEventObject(eventInput: any) {
     if (eventInput.object) {
       const eventObjectData: TelemetryObject = {
-      id: eventInput.object.id || '',
-      type: eventInput.object.type || '',
-      ver: eventInput.object.ver || '',
-      rollup: eventInput.object.rollup || {}
-    };
-    return eventObjectData;
-    } else { // telemetry.min.js will take last sent object is not sent.
+        id: eventInput.object.id || "",
+        type: eventInput.object.type || "",
+        ver: eventInput.object.ver || "",
+        rollup: eventInput.object.rollup || {}
+      };
+      return eventObjectData;
+    } else {
+      // telemetry.min.js will take last sent object is not sent.
       return {};
     }
   }
@@ -235,7 +259,7 @@ export class TelemetryHelper {
    */
   public getRollUpData(data: Array<string> = []) {
     const rollUp = {};
-    data.forEach((element, index) => rollUp['l' + (index + 1)] = element);
+    data.forEach((element, index) => (rollUp["l" + (index + 1)] = element));
     return rollUp;
   }
 }
